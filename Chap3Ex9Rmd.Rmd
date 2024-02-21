@@ -1,0 +1,132 @@
+Adam Prado
+2/21/24
+Chapter 3 Applied #9, in R
+
+---
+title: "Ch3 Applied 9 vs"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Installing the libraries
+```{r}
+library(ISLR2)
+library(MASS)
+```
+
+8) Viewing the data for Auto
+```{r}
+head(Auto)
+```
+
+a) Scatterplot matrix for each pair of variables, not including name.
+```{r}
+pairs(Auto[1:8])
+```
+b) Computing the matrix of correlation between each pair of variables, names excluded. 
+```{r}
+cor(Auto[1:8])
+```
+Note on b)  There are several variables that are highly correlated with each other.
+
+
+c) multi linear regression with mpg as response and all variables except name as predictors
+```{r}
+lm.fit<-lm(mpg~. - name, data=Auto)
+summary(lm.fit)
+```
+
+c)
+i) Is there are relationship between predictors and response?
+Yes, there is a rather strong relationship between them.  The Adjusted R^2 is .818, which is quite high and so the variables account for much of mpg's value.  The p-value is also increadibly close to 0, showing that the variables are significant.
+
+ii) Which predictors appear to have a statistrically significant reationship to the response?
+The intercept, weight, year and origin all have very low p-values, so they are very clearly statistically significant.  The displacement variable also has a p-value below .01 so it is also has a significant relationship with the response.  The variables for cylinders, horsepower and acceleration are not statistically significant.
+Note: the origin variables is treated as a numeric variable, but in reality it is a categorical one representing production region.  It would probably be best to change this into a set of dummy variables.
+
+iii) What does the coefficient for the year variables suggest?
+The coefficient for year of 0.75 suggests that for each year newer(increase in the year manufcatured) the car is, the miles/gallon increases by 0.75mpg.  This makes since as newer cars tend to include newer technology to make them more fuel efficient.  
+
+
+d) Plots of the 4 diagnostic plots of the linear regression fit.
+```{r}
+par(mfrow = c(2,2))
+plot(lm.fit)
+```
+Here is the same plots just showing one at a time for better visibility.
+```{r}
+plot(lm.fit)
+```
+Here is a print out of the high leverage and high residual outliers. Observations: 14, 323, 326, 327
+```{r}
+Auto[c(14,321:327),]
+```
+d) Reflection
+There is a slight pattern in the residual graph, which suggests that a standard linear model might not be the best fit.  Perhaps a polynomial fit better, or some model that takes into account variable interactions.
+There are a few outliers on the residual plot (323, 326 and 327).  When examining the data they all have very high mpg, 2 of them are diesel image (perhaps diesel could be an important variable worth exploring?)
+There is one high leverage point (14) the '70 buick estate wagon.  It has a huge engine and relative to other cars with simialar engine size, has much lower weight but very poor mpg.  This makes it a much higher leverage than any other car.
+
+e)Linear regression models with interaction effects, sevarl different combinations tested. The models are named lm.fit1 to lm.fit7 
+```{r}
+lm.fit1 <- lm(mpg~displacement*weight, data=Auto)
+summary(lm.fit1)
+```
+```{r}
+lm.fit2 <- lm(mpg~year*weight, data=Auto)
+summary(lm.fit2)
+```
+```{r}
+lm.fit3 <- lm(mpg~year*horsepower, data=Auto)
+summary(lm.fit3)
+```
+
+```{r}
+lm.fit4 <- lm(mpg~ year*weight + year*displacement, data=Auto)
+summary(lm.fit4)
+```
+```{r}
+lm.fit5 <- lm(mpg~year*weight + displacement, data=Auto)
+summary(lm.fit5)
+```
+```{r}
+lm.fit6 <- lm(mpg~year*horsepower + year*weight, data=Auto)
+summary(lm.fit6)
+```
+```{r}
+lm.fit7 <- lm(mpg~year*horsepower + weight, data=Auto)
+summary(lm.fit7)
+```
+
+
+After trying several models, the 7 most interesting are shown above.
+The models with interaction between year and weight were the best fits accoring to the R^2 values.  Year, weight and year:weight all had very, very high p-values, showing that the interaction was statstically significant.  However when years:horsepower were added, then it years, horsepower, and years:horsepower were all statistically significant but weight no longer was.  The best fit for the model was years, horsepower, weight and years*horsepower; all variables had very low p-values, a high R^2, suggesting that those variables were all statistically significant and the model was a relatively good fit.
+
+
+f) Trying different transformations of the variables.  These models are named lm.fitA to lm.fitE
+```{r}
+lm.fitA <-lm(mpg~poly(weight,3), data=Auto)
+summary(lm.fitA)
+```
+```{r}
+lm.fitB<-lm(mpg~log(weight), data=Auto)
+summary(lm.fitB)
+```
+```{r}
+lm.fitC<-lm(mpg~sqrt(weight), data=Auto)
+summary(lm.fitC)
+```
+
+```{r}
+lm.fitD<-lm(mpg~poly(year,3), data=Auto)
+summary(lm.fitD)
+```
+```{r}
+lm.fitE<-lm(mpg~log(year), data=Auto)
+summary(lm.fitE)
+
+```
+
+While some of the transformations had very low p-values and were statistically significant.  None of the models were as good as the ones from the previous section that used variables interactions instead of transformations involving exponents, roots and logs. Some of them had much lower R squared values even though they had low p-values.
