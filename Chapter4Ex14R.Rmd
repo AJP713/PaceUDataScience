@@ -1,0 +1,198 @@
+Adam Prado
+Pace University Data Science
+3/3/2024
+
+Chapter 4 Applied #14 in R
+
+---
+title: "Adam Prado Chapter 4 Applied # 14 R"
+output: html_notebook
+---
+
+14)
+
+Downloads dataset Auto and attaches the data
+```{r}
+library(ISLR2)
+head(Auto)
+attach(Auto)
+
+```
+```{r}
+dim(Auto)
+```
+a) Create a variable "mpg01" based on if a car's mpg is above or below the mean.
+Find the median of mpg
+```{r}
+median_mpg <- median(mpg)
+median_mpg
+```
+a) Creates a new column if Auto named "mpg01".  If mpg is greater than the median it is assigned a 1, otherwise assigned a 0.  The lab used a different approach to assigning 1/0 to a new column but using "ifelse" seemed more straight forward.
+```{r}
+Auto$mpg01 <- ifelse(mpg > median_mpg, 1, 0)
+View(Auto)
+```
+
+b) Exploring the data graphically .
+viewing all pairs of variables as scatterplots
+```{r}
+pairs(Auto[,])
+```
+b) Creating some boxplots comparing the mpg01 with 4 variables different variables. 
+I created a variable "mpg01AF" to change it to a factor, categorical, so that it produced box plots instead.
+```{r}
+mpg01AF <- as.factor(mpg01)
+plot(mpg01AF,horsepower, col ="green", varwidth = T, xlab = "Above Median MPG", ylab="Horsepower", main = "Above median mpg vs horsepower")
+plot(mpg01AF,weight, col ="red", varwidth = T, xlab = "Above Median MPG", ylab="weight", main = "Above median mpg vs weight")
+plot(mpg01AF,acceleration, col ="blue", varwidth = T, xlab = "Above Median MPG", ylab="Acceleration", main = "Above median mpg vs acceleration")
+plot(mpg01AF,year, col ="orange", varwidth = T, xlab = "Above Median MPG", ylab="year", main = "Above median mpg vs year")
+
+```
+b) The variables that seemed to have the most impact on mpg begging above/below the median were year, weight, and horsepower.  This can be seen in the box plots above with more weight and horsepower being negatively correlated with mpg while year is positively related.
+
+c) Split data into training set and test set
+I selected a test size of 100 (this is roughly a 1/4 of the data which seems comparable to the examples in the book).  I used the sample function to randomly pick 100 indices and then created the test and training data sets from them.  Dimensions of each are printed.
+```{r}
+test_ind <- sample(1:397, 100)
+test_set <- Auto[test_ind,]
+train_set<-Auto[-test_ind,]
+dim(test_set)
+dim(train_set)
+```
+d) Perform LDA on training set, to predict mpg01 using variables year, weight and horsepower.
+```{r}
+library(MASS)
+lda.fit <-lda(mpg01~ weight+year+horsepower, data=train_set)
+lda.fit
+```
+As expected, higher weight and horsepower was associated with values of "0" while higher year with "1" in mpg01
+
+```{r}
+lda.pred <- predict(lda.fit, test_set)
+names(lda.pred)
+lda.class<-lda.pred$class
+
+
+predictions <- predict(lda.fit, test_set)
+table(predictions$class, test_set$mpg01)
+
+```
+```{r}
+mean(lda.class==test_set$mpg01)
+sum(predictions$posterior[,1]>=0.5)
+sum(predictions$posterior[,1]<0.5)
+(42+44)/(42+3+11+44)
+```
+d) The accuracy of the LDA model was 86% on the test data set.  So the error rate was only 14%
+
+e) Perform QDA on training data
+```{r}
+qda.fit <-qda(mpg01~ weight+year+horsepower, data=train_set)
+qda.fit
+```
+```{r}
+qda.pred <- predict(qda.fit, test_set)
+names(qda.pred)
+qda.class<-qda.pred$class
+
+
+predictions <- predict(qda.fit, test_set)
+table(predictions$class, test_set$mpg01)
+```
+```{r}
+mean(qda.class==test_set$mpg01)
+sum(predictions$posterior[,1]>=0.5)
+sum(predictions$posterior[,1]<0.5)
+(44+43)/(44+4+9+43)
+```
+e)  The test error rate for QDA was slightly better than LDA, only 13% error rate.
+
+f) Perform a logistic regression on the training data.
+```{r}
+glm.fits<- glm(mpg01~weight+year+horsepower, data=train_set, family=binomial)
+predictions <- predict(glm.fits, newdata = test_set, type = "response")
+predictions <- ifelse(predictions > 0.5, 1, 0)
+table(predictions, test_set$mpg01)
+```
+
+```{r}
+mean(predictions==test_set$mpg01)
+(46+44)/(46+3+7+44)
+```
+f)  The logistics was even more accurate with 90% accuracy and an error rate of only 10%.
+
+g)  Perform Naive Bayes
+```{r}
+library(e1071)
+nb.fit<- naiveBayes(mpg01~weight+year+horsepower, data=train_set)
+nb.fit
+```
+```{r}
+nb.class<-predict(nb.fit, train_set)
+predictions <- predict(nb.fit, newdata = test_set)
+table(predictions, test_set$mpg01)
+
+```
+```{r}
+mean(predictions==test_set$mpg01)
+(42+44)/(42+3+11+44)
+```
+g) The accuracy of Naive Bayes was 86%, with 14% error rate.  Similar results to LDA.
+
+h) Perform KNN on training data with several values of k
+k = 1
+```{r}
+library(class)
+variables <- c("year", "weight", "horsepower")
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 1)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+k = 2
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 2)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+k = 3
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 3)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+k = 5
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 5)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+
+k = 6
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 6)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+
+k = 8
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 8)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+
+k = 12
+```{r}
+knn.pred <- knn(train = train_set[, variables], test = test_set[, variables], cl = train_set$mpg01, k = 12)
+table(knn.pred,test_set$mpg01 )
+mean(knn.pred==test_set$mpg01)
+
+```
+
+h) The test errors were fairly consistent for different values of k, ranging from 15% error to 13% error rate. The most accurate models were k=3 and k=6
