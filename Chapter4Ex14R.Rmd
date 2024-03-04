@@ -30,7 +30,7 @@ median_mpg
 a) Creates a new column if Auto named "mpg01".  If mpg is greater than the median it is assigned a 1, otherwise assigned a 0.  The lab used a different approach to assigning 1/0 to a new column but using "ifelse" seemed more straight forward.
 ```{r}
 Auto$mpg01 <- ifelse(mpg > median_mpg, 1, 0)
-View(Auto)
+head(Auto)
 ```
 
 b) Exploring the data graphically .
