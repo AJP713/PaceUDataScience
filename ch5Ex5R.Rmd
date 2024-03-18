@@ -1,0 +1,149 @@
+Adam Prado
+Data Science
+3/16/24
+Chapter 5 Applied #5 in R
+
+---
+title: "Ch5App5R"
+output: html_notebook
+---
+
+
+5)
+Downloads the data for "Default" and shows variable names.
+```{r}
+library(ISLR2)
+set.seed(1)
+head(Default)
+names(Default)
+```
+
+a) 
+Fits a logistic model that uses income and balance to predict default
+
+```{r}
+glm.fit <- glm(default ~ income + balance, data = Default, family = "binomial")
+summary(glm.fit)
+```
+```{r}
+dim(Default)
+attach(Default)
+```
+
+b) i) 
+I split the data in half, so the training data and validation data are the same size.  The instructions didn't specify and 5000 rows seemed like enough for a training data set only using a few varaibles. 
+```{r}
+set.seed(1)
+train <- sample(1:10000,5000)
+train_data <- Default[train, ]
+validation_data <- Default[-train,]
+```
+```{r}
+dim(train_data)
+```
+
+```{r}
+dim(validation_data)
+```
+
+b) ii)
+Fits a multi-logisitic regression using only the training data set.
+```{r}
+glm.fit <- glm(default ~ income + balance, data = train_data, family = "binomial")
+summary(glm.fit)
+```
+b) iii)
+Finds predictions for the validation data set using the training model. 
+```{r}
+glm.probs <- predict(glm.fit, newdata = validation_data, type = "response")
+glm.probs[1:10]
+```
+b) iii)
+Classifies predictions as yes or no if the prediction probabilitiy is over 0.5 or not.  Prints results in the table. 
+```{r}
+glm.pred <- rep("No", 5000)
+glm.pred[glm.probs>0.5]="Yes"
+table(glm.pred, validation_data$default)
+```
+b) iv)
+Finds the validation set error rate by calculating the fraction of incorrect predictions. 
+```{r}
+mean(glm.pred != validation_data$default )
+```
+```{r}
+(108+19)/5000
+
+```
+c) The process is repeated 3 more times using different seed values to split the observations differently.
+```{r}
+set.seed(2)
+train <- sample(1:10000,5000)
+train_data <- Default[train, ]
+validation_data <- Default[-train,]
+glm.fit <- glm(default ~ income + balance, data = train_data, family = "binomial")
+glm.probs <- predict(glm.fit, newdata = validation_data, type = "response")
+glm.pred <- rep("No", 5000)
+glm.pred[glm.probs>0.5]="Yes"
+table(glm.pred, validation_data$default)
+
+```
+```{r}
+mean(glm.pred != validation_data$default )
+```
+```{r}
+set.seed(3)
+train <- sample(1:10000,5000)
+train_data <- Default[train, ]
+validation_data <- Default[-train,]
+glm.fit <- glm(default ~ income + balance, data = train_data, family = "binomial")
+glm.probs <- predict(glm.fit, newdata = validation_data, type = "response")
+glm.pred <- rep("No", 5000)
+glm.pred[glm.probs>0.5]="Yes"
+table(glm.pred, validation_data$default)
+```
+```{r}
+mean(glm.pred != validation_data$default )
+```
+```{r}
+set.seed(4)
+train <- sample(1:10000,5000)
+train_data <- Default[train, ]
+validation_data <- Default[-train,]
+glm.fit <- glm(default ~ income + balance, data = train_data, family = "binomial")
+glm.probs <- predict(glm.fit, newdata = validation_data, type = "response")
+glm.pred <- rep("No", 5000)
+glm.pred[glm.probs>0.5]="Yes"
+table(glm.pred, validation_data$default)
+```
+```{r}
+mean(glm.pred != validation_data$default )
+```
+c)
+The validation set errors were only slightly different; ranging from the lowest of 0.0238 to the highest of 0.0264.  There is some difference  because of the different samples taken but they are all relatively close, likely because the sample size of 5000 is large enough to limit the variation. 
+At first this error seems very low and that the model is very accurate, but in reality given how rare defaults are, it only slightly out performs just guessing "no" every time.
+
+
+d) 
+Created a mulitple logistic regression model that also includes the student variable.
+```{r}
+set.seed(4)
+train <- sample(1:10000,5000)
+train_data <- Default[train, ]
+validation_data <- Default[-train,]
+glm.fit <- glm(default ~ income + balance + student, data = train_data, family = "binomial")
+glm.probs <- predict(glm.fit, newdata = validation_data, type = "response")
+glm.pred <- rep("No", 5000)
+glm.pred[glm.probs>0.5]="Yes"
+table(glm.pred, validation_data$default)
+```
+```{r}
+mean(glm.pred != validation_data$default )
+```
+The test error rate was actually slightly higher than most of the models that did not include it.  The dummy variable for "student" does not appear to lead to a reduction in the test error.
+```{r}
+summary(glm.fit)
+```
+Reflection) 
+Interestingly the inlusion of "student" is statistically significant but changes income so that it no longer.  These two variables are likely highly correlated. 
+
+
