@@ -1,0 +1,198 @@
+Adam Prado
+Pace U. Data Science 
+3/30/24
+
+Chapter 6 Applied #8
+---
+title: "Chapter 6 Applied #8"
+output: html_notebook
+---
+
+Applied #8)
+
+Downloads all of the libraries.  I'm not sure if I needed all of them, but just to be safe I included all of them from the lab here again. 
+
+```{r}
+library(ISLR2)
+library(leaps)
+library(glmnet)
+library(pls)
+```
+a) Creata 100 predictor variables, X.  And a noise variable called noise 
+
+```{r}
+set.seed(1)
+X <- rnorm(100)
+noise <- rnorm(100)
+```
+
+b)
+This creates a responce vector, Y.  I chose the constants of 6,5,4, and 3 for B0 to B3 respectively. 
+```{r}
+Y <- 6+ 5*X + 4*X^2 + 3*X^3 + noise
+Y
+```
+
+c) Uses regsubsets to perform best subset selection for a model containing x^1 to X^10
+```{r}
+DataSet <- data.frame(X = X, X2 = X^2, X3 = X^3, X4 = X^4, X5 = X^5, X6 = X^6, X7 = X^7, X8 = X^8, X9 = X^9, X10 = X^10, Y = Y)
+regfit <- regsubsets(Y~., data=DataSet, nvmax=10)
+summary(regfit)
+```
+
+```{r}
+plot(regfit, scale = "Cp")
+
+```
+```{r}
+plot(regfit, scale = "bic")
+```
+
+```{r}
+plot(regfit, scale = "adjr2")
+```
+```{r}
+regSummary <- summary(regfit)
+plot(regSummary$cp, xlab = "Number of variables", ylab = "CP", type = "l")
+```
+
+```{r}
+bestCp <- which.min(regSummary$cp)
+bestCp
+```
+```{r}
+plot(regSummary$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+```
+```{r}
+bestBIC <- which.min(regSummary$bic)
+bestBIC
+```
+
+```{r}
+coef(regfit, id=3)
+```
+
+```{r}
+plot(regSummary$adjr2, xlab = "Number of variables", ylab = "Adjusted R2", type = "l")
+```
+
+
+```{r}
+bestAdjR2 <- which.max(regSummary$adjr2)
+bestAdjR2
+```
+```{r}
+coef(regfit, id=4)
+```
+c) The CP, BIC, and AdjR2 recommend using 3 or 4 variables.  All three of them include x, x^2 and x^3 which is to be expcted because it's how the model was created.  Some of them use an extra variables x^5 but the coefficient of it is rather close to 0.  
+The coefficients of the other values are all relatively close to the expected values of 6,5,4 and 3.
+
+
+d) Repeated the stepts above using forward and then backwards stepwise selection. 
+
+```{r}
+regfitFwd <- regsubsets(Y~., data=DataSet, nvmax=10, method="forward")
+regFwdSum <- summary(regfitFwd)
+regFwdSum
+```
+```{r}
+plot(regFwdSum$cp, xlab = "Number of variables", ylab = "CP", type = "l")
+plot(regFwdSum$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+plot(regFwdSum$adjr2, xlab = "Number of variables", ylab = "Adjusted R2", type = "l")
+```
+```{r}
+which.min(regFwdSum$cp)
+which.min(regFwdSum$bic)
+which.max(regFwdSum$adjr2)
+
+```
+
+
+```{r}
+
+regfitBwd <- regsubsets(Y~., data=DataSet, nvmax=10, method="backward")
+regBwdSum <- summary(regfitBwd)
+regBwdSum
+```
+
+```{r}
+plot(regBwdSum$cp, xlab = "Number of variables", ylab = "CP", type = "l")
+plot(regBwdSum$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+plot(regBwdSum$adjr2, xlab = "Number of variables", ylab = "Adjusted R2", type = "l")
+
+```
+```{r}
+which.min(regBwdSum$cp)
+which.min(regBwdSum$bic)
+which.max(regBwdSum$adjr2)
+coef(regfitBwd, id=3)
+coef(regfitBwd, id=4)
+```
+d)  The results are very similar when using forward or backwards stepwise selection as they were when using best subset.  All of the model were optimized using 3 or 4 variables and they all included the correct variables in the results, and the extra variable not in the model had a coefficient very close to 0.
+
+
+e)Fits a lasso model to the same data.  Finds the optimal lambda value.
+
+
+```{r}
+X_matrix <- model.matrix(Y ~ ., data = DataSet)[, -1] 
+cv.lasso <- cv.glmnet(X_matrix, Y, alpha = 1)
+plot(cv.lasso)
+bestlam <- cv.lasso$lambda.min
+bestlam
+
+```
+
+```{r}
+lassoPred <- glmnet(X_matrix, Y, alpha = 1)
+predict(lassoPred, s = bestlam, type = "coefficients")
+```
+e) Lasso included a few more variables that did the other models, it chose to include 6.  The coefficients for the intercept, x, x^2 and x^3 are all fairly close to the expected values used in the model that created the predictor varaibles.  And the other varialbes x^4 to x^7 all have relatively low coefficients.  The results are consistnt across all methods. 
+
+f) Generate a new reponse variables.  I used the coefficents 20 and 9 for the intercept and x^7 coefficient respecitvely.  
+```{r}
+Ynew <- 20 + 9*X^7+noise
+Ynew
+
+```
+
+```{r}
+modelNew <- regsubsets(y = Ynew,
+                    x = X_matrix,
+                    nvmax = 10)
+
+modelNewSum <- summary(modelNew)
+modelNewSum
+```
+```{r}
+plot(modelNewSum$cp, xlab = "Number of variables", ylab = "CP", type = "l")
+plot(modelNewSum$bic, xlab = "Number of variables", ylab = "BIC", type = "l")
+plot(modelNewSum$adjr2, xlab = "Number of variables", ylab = "Adjusted R2", type = "l")
+```
+```{r}
+which.min(modelNewSum$cp)
+which.min(modelNewSum$bic)
+which.max(modelNewSum$adjr2)
+```
+```{r}
+coef(modelNew, id = 2)
+coef(modelNew, id = 1)
+coef(modelNew, id = 4)
+```
+```{r}
+X_matrix <- model.matrix(Ynew ~ ., data = DataSet)[, -1] 
+cvNew.lasso <- cv.glmnet(X_matrix, Ynew, alpha = 1)
+plot(cvNew.lasso)
+bestlam <- cvNew.lasso$lambda.min
+bestlam
+
+
+```
+
+```{r}
+lassoPred <- glmnet(X_matrix, Ynew, alpha = 1)
+predict(lassoPred, s = bestlam, type = "coefficients")
+```
+
+f) The best subset selection method resulted in models using 2,1,4 variables for the different measures CP, BIC, and AdjR2.  All of them used the intercept and x^7 with values close tot he expected 20 and 9 and the other coefficients were all much closer to 0.  
+Lasso correctly only used the intercept and the x^7 variables but the values were a bit farther aways from the 20,9 expected values than the best subset selections methods were.  
