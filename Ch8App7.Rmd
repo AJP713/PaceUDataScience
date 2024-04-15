@@ -1,0 +1,63 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ISLR2)
+library(tree)
+library(randomForest)
+attach(Boston)
+View(Boston)
+```
+
+```{r}
+set.seed(1)
+train <- sample(1:nrow(Boston), nrow(Boston)/2)
+tree.boston <- tree(medv~., Boston, subset=train)
+summary(tree.boston)
+```
+Making a blank list for the MSE
+```{r}
+MSE.list <- c()
+```
+```{r}
+set.seed(1)
+boston.test <- Boston[-train, "medv"]
+
+
+```
+
+```{r}
+bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=12, importance = TRUE)
+bag.boston
+```
+
+```{r}
+yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+mean((yhat.bag-boston.test)^2)
+```
+```{r}
+bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=6, importance = TRUE)
+yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+mean((yhat.bag-boston.test)^2)
+
+```
+
+TODO put info below into list/vector and plot on graph. 
+
+```{r}
+for (x in 1:12) {
+  bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=x, importance = TRUE)
+  yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+  MSE.x <- mean((yhat.bag-boston.test)^2)
+  print(x)
+  print(MSE.x)
+  
+   
+}
+```
+```{r}
+
+```
+
