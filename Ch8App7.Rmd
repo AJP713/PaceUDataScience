@@ -1,26 +1,32 @@
+Adam Prado
+Data Science
+4/14/24
+
+Chapter 8 Applied #7 
+
 ---
-title: "R Notebook"
+title: "Chapter8App7"
 output: html_notebook
 ---
 
+Downloads libraries for creating trees/forests and the Boston data set.
 ```{r}
 library(ISLR2)
 library(tree)
 library(randomForest)
 attach(Boston)
-View(Boston)
+
 ```
 
+Sets the random seed and splits the data set in half to make the training data, and thus the test data set by using [-train]
 ```{r}
 set.seed(1)
 train <- sample(1:nrow(Boston), nrow(Boston)/2)
 tree.boston <- tree(medv~., Boston, subset=train)
 summary(tree.boston)
 ```
-Making a blank list for the MSE
-```{r}
-MSE.list <- c()
-```
+
+creates the variable for validation testing
 ```{r}
 set.seed(1)
 boston.test <- Boston[-train, "medv"]
@@ -28,15 +34,17 @@ boston.test <- Boston[-train, "medv"]
 
 ```
 
+Testing out a single random forest run with mtry=12
 ```{r}
 bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=12, importance = TRUE)
 bag.boston
 ```
-
+Testing finding the MSE of it. 
 ```{r}
 yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
 mean((yhat.bag-boston.test)^2)
 ```
+Testing again with mtry = 6
 ```{r}
 bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=6, importance = TRUE)
 yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
@@ -44,20 +52,68 @@ mean((yhat.bag-boston.test)^2)
 
 ```
 
-TODO put info below into list/vector and plot on graph. 
+Creates an empty vector, runs a for loop from 1 to 12 to try all possible values of mtry.  Finds the MSE of each and saves it into the vector at the corresponding index to the mrty.
 
 ```{r}
+MSE.list <- c()
 for (x in 1:12) {
   bag.boston <- randomForest(medv~., data=Boston, subset= train, mtry=x, importance = TRUE)
   yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
   MSE.x <- mean((yhat.bag-boston.test)^2)
-  print(x)
-  print(MSE.x)
-  
+  MSE.list <- c(MSE.list, MSE.x)
    
 }
+MSE.list
 ```
+Plots a line graph of the MSE of values of mtry from 1 to 12
+```{r}
+plot(MSE.list, type = "l", col = "blue", xlab = "mtry values", ylab = "MSE ", main = "Plot of MSE over different mtry")
+```
+Testing out using a different number of trees
+```{r}
+bag.boston <- randomForest(medv~., data=Boston, subset=train, mtry = 12, ntree = 25)
+yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+mean((yhat.bag-boston.test)^2)
+```
+Creating a for loop to go from 10 to 1000 trees in the random forest counting by 10's.  The number of trees are saved in one vector and the MSE into another.
+```{r}
+treeNum <- c()
+MSE.list <-c()
+for (i in seq(10, 1000, by = 10)) {
+  bag.boston <- randomForest(medv~., data=Boston, subset=train, mtry = 12, ntree = i)
+  yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+  MSE <- mean((yhat.bag-boston.test)^2)
+  treeNum <- c(treeNum, i)
+  MSE.list <- c(MSE.list, MSE)
+
+}
+```
+
+Graphing the MSE over different numbers of trees used. 
+```{r}
+plot(treeNum, MSE.list,  type = "l", col = "red", xlab = "MSE", ylab = "treeNum", main = "Line Graph of MSE vs treeNum mtry=12")
+```
+
+Similar to above but the mtry =3 this time, which was the optimal found in the previous section.  
+```{r}
+treeNum <- c()
+MSE.list <-c()
+for (i in seq(10, 1000, by = 10)) {
+  bag.boston <- randomForest(medv~., data=Boston, subset=train, mtry = 3, ntree = i)
+  yhat.bag <- predict(bag.boston, newdata=Boston[-train,])
+  MSE <- mean((yhat.bag-boston.test)^2)
+  treeNum <- c(treeNum, i)
+  MSE.list <- c(MSE.list, MSE)
+
+}
+```
+
+Plot of 
 ```{r}
 
+plot(treeNum, MSE.list,  type = "l", col = "green", xlab = "MSE", ylab = "treeNum", main = "Line Graph of MSE vs treeNum mtry=3")
 ```
+## Describe the results
+The first line graph shows the MSE for all possible values of mtry (the number of variables available at each step to select from).  The lowest MSE was at 3 but the actually differences of the MSE were not that much. The next 2 graphs show the MSE over different numbers of trees.  It seemed that once the number of trees got past 20, the values of MSE fluctuated some but more or less stayed consistent in the long term.   
+
 
